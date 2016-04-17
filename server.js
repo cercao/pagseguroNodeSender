@@ -2,74 +2,71 @@
 var express = require('express');
 var app = express();
 var port = process.env.PORT || 3000;
+var querystring = require('querystring');
+var http = require('http');
+http.post = require('http-post');
  
 // email do vendedor
 var email = 'cercaoc@email.com';
 // token da conta do lucas
 var token = '26AB322297EB4C039870429CA2B2FC4F';
- 
-
-
+var URL_PAG = 'https://sandbox.pagseguro.uol.com.br/v2/checkout/payment.html?code=';
  
 app.get('/', function (req, res) {
-  //Inicializar a função com o e-mail e token 
-    var pag, pagseguro;
-    pagseguro = require('pagseguro');
-    pag = new pagseguro({
-        email : 'cercaoc@email.com',
-        token: '26AB322297EB4C039870429CA2B2FC4F',
-		mode : 'sandbox'
-    });
- 
-    //Configurando a moeda e a referência do pedido 
-    pag.currency('BRL');
-    pag.reference('12345');
- 
-    //Adicionando itens 
-    pag.addItem({
-        id: 1,
-        description: '8Hs RTG Pro Server',
-        amount: "14.99",
-        quantity: 3,
-        weight: 2342
-    });
- 
+	//Load the request module
+	var request = require('request');
 
-    //Configurando as informações do comprador 
-    pag.buyer({
-        name: 'Lucas Rodrigues',
-        email: 'c68993417956129600108@sandbox.pagseguro.com.br',
-        phoneAreaCode: '11',
-        phoneNumber: '953630279'
-    });
- 
-    //Configurando a entrega do pedido 
+	//Lets configure and request
+	request({
+		url: 'https://ws.sandbox.pagseguro.uol.com.br/v2/checkout/', //URL to hit
+		qs: {
+      'email' : 'cercaoc@gmail.com',
+      'token': '26AB322297EB4C039870429CA2B2FC4F',
+      'currency': 'BRL',
+      'warning_level' : 'QUIET',
+	  'itemId1' : '0001',
+	  'itemDescription1' : 'Notebook Prata',
+	  'itemAmount1' : '24300.00',
+	  'itemQuantity1' : '1',
+	  'itemWeight1' : '1000',
+	  'reference' : 'REF1234',
+	  'senderName' : 'Jose Comprador',
+	  'senderAreaCode' : '11',
+	  'senderPhone' : '56273440',
+	  'senderEmail' : 'comprador@uol.com.br',
+	  'shippingType' : '1',
+	  'shippingAddressStreet' : 'Av. Brig. Faria Lima',
+	  'shippingAddressNumber' : '1384',
+	  'shippingAddressComplement' : '5o andar',
+	  'shippingAddressDistrict' : 'Jardim Paulistano',
+	  'shippingAddressPostalCode' : '01452002',
+	  'shippingAddressCity' : 'Sao Paulo',
+	  'shippingAddressState' : 'SP',
+	  'shippingAddressCountry' : 'BRA'	       
+  }, //Query string data
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/x-www-form-urlencoded; charset=ISO-8859-1'			
+		}
+		//body: 'Hello Hello! String body!' //Set the body as a string
+	}, function(error, response, body){
+		if(error) {
+			console.log(error);
+		} else {
+			console.log(response.statusCode, body);
+			var parseString = require('xml2js').parseString;
 
-    pag.shipping({
-        type: 1,
-        street: 'Rua Joao Martins Ribeiro Filho',
-        number: '114',
-        complement: 'Apto 44',
-        district: 'Jardim Adhemar de Barros',
-        postalCode: '05540040',
-        city: 'São Paulo',
-        state: 'RS',
-        country: 'BRA'
-    });
- 
-    //Configuranto URLs de retorno e de notificação (Opcional) 
-    //ver https://pagseguro.uol.com.br/v2/guia-de-integracao/finalizacao-do-pagamento.html#v2-item-redirecionando-o-comprador-para-uma-url-dinamica 
-    pag.setRedirectURL("http://ec2-54-233-172-47.sa-east-1.compute.amazonaws.com/pagseguro");
-    pag.setNotificationURL("http://ec2-54-233-172-47.sa-east-1.compute.amazonaws.com/pagseguro");
- 
-    //Enviando o xml ao pagseguro 
-    pag.send(function(err, res) {
-        if (err) {
-            console.log(err);
-			//res.send(err);	
-        }
-        console.log(res);
-    });
+			parseString(body, function (err, result) {
+				res.writeHead(301,
+					{Location: URL_PAG + result.checkout.code}
+				);
+				res.end();
+				
+				
+				console.dir(result);
+			});
+		}
+	});
 });
  
 app.listen(3000, function () {

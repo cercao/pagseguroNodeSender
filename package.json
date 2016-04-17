@@ -3,6 +3,12 @@
   "main": "server.js",
   "dependencies": {
     "express": "~4.10.2",
-    "pagseguro": "^0.1.0"
+    "fs": "0.0.2",
+    "http": "0.0.0",
+    "http-post": "^0.1.1",
+    "pagseguro": "^0.1.0",
+    "querystring": "^0.2.0",
+    "request": "^2.71.0",
+    "xml2js": "^0.4.16"
   }
 }
